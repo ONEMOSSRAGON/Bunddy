@@ -116,8 +116,27 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       c_user, fb_dtsg, lsd, jazoest,
       __spin_r: spinrMatch ? spinrMatch[1] : '',
       __spin_b: spinbMatch ? spinbMatch[1] : '',
-      __spin_t: spintMatch ? spintMatch[1] : ''
+      __spin_t: spintMatch ? spintMatch[1] : '',
+      timestamp: Date.now() // 🔥 Thêm timestamp để phát hiện token cũ
     };
+  }
+
+  // 🔥 HÀM MỚI: Refetch tokens để đảm bảo luôn mới
+  function refreshTokensIfNeeded(oldTokens) {
+    try {
+      const newTokens = getTokensFromPage();
+      const elapsed = Date.now() - oldTokens.timestamp;
+      
+      // Nếu token cũ hơn 2 phút, buộc refetch
+      if (elapsed > 120000) {
+        console.log('[FBToolkit] Tokens cũ, refetch mới');
+        return newTokens;
+      }
+      return oldTokens;
+    } catch (e) {
+      console.warn('[FBToolkit] Refetch failed:', e.message);
+      return oldTokens;
+    }
   }
 
   async function searchGroupsFB(keyword) {
@@ -234,7 +253,7 @@ if (typeof window.fbToolkitInjected === 'undefined') {
     formData.append("upload_id", "jsc_c_" + Math.floor(Math.random() * 1000000));
     formData.append("farr", file);
 
-    const url = `https://www.facebook.com/ajax/react_composer/attachments/photo/upload?av=${tokens.c_user}&__user=${tokens.c_user}&__a=1&fb_dtsg=${tokens.fb_dtsg}&jazoest=${tokens.jazoest}&lsd=${tokens.lsd}&__spin_r=${tokens.__spin_r}&__spin_b=${tokens.__spin_b}&__spin_t=${tokens.__spin_t}`;
+    const url = `https://www.facebook.com/ajax/react_composer/attachments/photo/upload?av=${tokens.c_user}&__user=${tokens.c_user}&__a=1&fb_dtsg=${tokens.fb_dtsg}&jazoest=${tokens.jazoest}&lsd=${tokens.lsd}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -264,7 +283,10 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function createGroupPostFB(groupId, text, imageIds) {
-    const tokens = getTokensFromPage();
+    // 🔥 FIX CHÍNH: Refetch tokens trước mỗi lần đăng bài
+    let tokens = getTokensFromPage();
+    tokens = refreshTokensIfNeeded(tokens);
+
     const uuid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
     const variables = {
