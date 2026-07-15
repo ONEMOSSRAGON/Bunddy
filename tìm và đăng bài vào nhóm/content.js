@@ -117,30 +117,14 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       __spin_r: spinrMatch ? spinrMatch[1] : '',
       __spin_b: spinbMatch ? spinbMatch[1] : '',
       __spin_t: spintMatch ? spintMatch[1] : '',
-      timestamp: Date.now() // 🔥 Thêm timestamp để phát hiện token cũ
+      timestamp: Date.now()
     };
   }
 
-  // 🔥 HÀM MỚI: Refetch tokens để đảm bảo luôn mới
-  function refreshTokensIfNeeded(oldTokens) {
-    try {
-      const newTokens = getTokensFromPage();
-      const elapsed = Date.now() - oldTokens.timestamp;
-      
-      // Nếu token cũ hơn 2 phút, buộc refetch
-      if (elapsed > 120000) {
-        console.log('[FBToolkit] Tokens cũ, refetch mới');
-        return newTokens;
-      }
-      return oldTokens;
-    } catch (e) {
-      console.warn('[FBToolkit] Refetch failed:', e.message);
-      return oldTokens;
-    }
-  }
-
   async function searchGroupsFB(keyword) {
+    // 🔥 REFETCH TOKENS MỖI LẦN GỌI
     const tokens = getTokensFromPage();
+    
     const variables = {
       "count": 50,
       "allow_streaming": false,
@@ -245,7 +229,9 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function uploadImageFB(file) {
+    // 🔥 REFETCH TOKENS MỖI LẦN GỌI
     const tokens = getTokensFromPage();
+    
     const formData = new FormData();
     formData.append("source", "8");
     formData.append("profile_id", tokens.c_user);
@@ -283,9 +269,9 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function createGroupPostFB(groupId, text, imageIds) {
-    // 🔥 FIX CHÍNH: Refetch tokens trước mỗi lần đăng bài
-    let tokens = getTokensFromPage();
-    tokens = refreshTokensIfNeeded(tokens);
+    // 🔥 REFETCH TOKENS BẮTBUỘC MỖI LẦN - KHÔNG CACHE
+    console.log('[FBToolkit] Refetch tokens trước đăng bài...');
+    const tokens = getTokensFromPage();
 
     const uuid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
