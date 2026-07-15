@@ -122,7 +122,6 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function searchGroupsFB(keyword) {
-    // 🔥 REFETCH TOKENS MỖI LẦN GỌI
     const tokens = getTokensFromPage();
     
     const variables = {
@@ -229,7 +228,6 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function uploadImageFB(file) {
-    // 🔥 REFETCH TOKENS MỖI LẦN GỌI
     const tokens = getTokensFromPage();
     
     const formData = new FormData();
@@ -269,7 +267,6 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   async function createGroupPostFB(groupId, text, imageIds) {
-    // 🔥 REFETCH TOKENS BẮTBUỘC MỖI LẦN - KHÔNG CACHE
     console.log('[FBToolkit] Refetch tokens trước đăng bài...');
     const tokens = getTokensFromPage();
 
@@ -398,50 +395,249 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   function initDashboardLogic(shadow) {
-    const els = {
-      keyword: shadow.getElementById('searchInput'),
-      searchBtn: shadow.getElementById('btnSearch'),
-      groupsBody: shadow.getElementById('groupsBody'),
-      selectAll: shadow.getElementById('selectAll'),
-      selectedCount: shadow.getElementById('selectedCount'),
-      postContent: shadow.getElementById('postContent'),
-      btnStartPost: shadow.getElementById('btnStartPost'),
-      btnPausePost: shadow.getElementById('btnPausePost'),
-      logContainer: shadow.getElementById('logContainer'),
-      postImage: shadow.getElementById('postImage'),
-      imageMode: shadow.getElementById('imageMode'),
-      btnUploadImage: shadow.getElementById('btnUploadImage'),
-      imagePreview: shadow.getElementById('imagePreview'),
-      delaySeconds: shadow.getElementById('delaySeconds')
+    // ========== TAB SWITCHING - SHADOW DOM FIX ==========
+    const tabBtns = shadow.querySelectorAll('.tab-btn');
+    const tabContents = shadow.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.getAttribute('data-tab');
+        
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        btn.classList.add('active');
+        
+        const targetTab = shadow.getElementById(`${tabName}-tab`);
+        if (targetTab) {
+          targetTab.classList.add('active');
+        }
+      });
+    });
+
+    // ========== ACCOUNT TYPE SELECTOR - SHADOW DOM FIX ==========
+    const accountTypeBtns = shadow.querySelectorAll('.account-type-btn');
+    const accountSettingsPanels = shadow.querySelectorAll('.account-settings-panel');
+
+    accountTypeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const accountType = btn.getAttribute('data-type');
+        
+        accountTypeBtns.forEach(b => b.classList.remove('active'));
+        accountSettingsPanels.forEach(panel => panel.style.display = 'none');
+        
+        btn.classList.add('active');
+        
+        const targetPanel = shadow.getElementById(`${accountType}-settings`);
+        if (targetPanel) {
+          targetPanel.style.display = 'block';
+        }
+        
+        loadSettings(shadow, accountType);
+      });
+    });
+
+    // ========== SETTINGS STORAGE ==========
+    const STORAGE_KEYS = {
+      oldAcc: 'fbtoolkit_old_account_settings',
+      cloneAcc: 'fbtoolkit_clone_account_settings'
     };
 
-    let currentGroups = [];
-    let isPosting = false;
-    let isPaused = false;
-    let globalImageIds = [];
+    function getStorageKey(accountType) {
+      return accountType === 'old-account' ? STORAGE_KEYS.oldAcc : STORAGE_KEYS.cloneAcc;
+    }
 
+    function loadSettings(shadowRoot, accountType) {
+      const key = getStorageKey(accountType);
+      chrome.storage.local.get([key], (result) => {
+        const settings = result[key] || {};
+        
+        if (accountType === 'old-account') {
+          shadowRoot.getElementById('oldAccMinDelay').value = settings.minDelay || 60;
+          shadowRoot.getElementById('oldAccMaxDelay').value = settings.maxDelay || 180;
+          shadowRoot.getElementById('oldAccMaxPostsPerDay').value = settings.maxPostsPerDay || 20;
+          shadowRoot.getElementById('oldAccSafeMode').checked = settings.safeMode !== false;
+          shadowRoot.getElementById('oldAccErrorDelay').value = settings.errorDelay || 300;
+          shadowRoot.getElementById('oldAccMaxRetry').value = settings.maxRetry || 3;
+        } else {
+          shadowRoot.getElementById('cloneAccMinDelay').value = settings.minDelay || 20;
+          shadowRoot.getElementById('cloneAccMaxDelay').value = settings.maxDelay || 90;
+          shadowRoot.getElementById('cloneAccMaxPostsPerDay').value = settings.maxPostsPerDay || 50;
+          shadowRoot.getElementById('cloneAccWarmupMode').checked = settings.warmupMode !== false;
+          shadowRoot.getElementById('cloneAccWarmupDays').value = settings.warmupDays || 3;
+          shadowRoot.getElementById('cloneAccWarmupMaxPosts').value = settings.warmupMaxPosts || 10;
+          shadowRoot.getElementById('cloneAccErrorDelay').value = settings.errorDelay || 180;
+          shadowRoot.getElementById('cloneAccMaxRetry').value = settings.maxRetry || 2;
+          shadowRoot.getElementById('cloneAccAggressive').value = settings.aggressive || 'normal';
+        }
+      });
+    }
+
+    function saveSettings(shadowRoot, accountType) {
+      const key = getStorageKey(accountType);
+      let settings = {};
+      
+      if (accountType === 'old-account') {
+        settings = {
+          minDelay: parseInt(shadowRoot.getElementById('oldAccMinDelay').value),
+          maxDelay: parseInt(shadowRoot.getElementById('oldAccMaxDelay').value),
+          maxPostsPerDay: parseInt(shadowRoot.getElementById('oldAccMaxPostsPerDay').value),
+          safeMode: shadowRoot.getElementById('oldAccSafeMode').checked,
+          errorDelay: parseInt(shadowRoot.getElementById('oldAccErrorDelay').value),
+          maxRetry: parseInt(shadowRoot.getElementById('oldAccMaxRetry').value)
+        };
+      } else {
+        settings = {
+          minDelay: parseInt(shadowRoot.getElementById('cloneAccMinDelay').value),
+          maxDelay: parseInt(shadowRoot.getElementById('cloneAccMaxDelay').value),
+          maxPostsPerDay: parseInt(shadowRoot.getElementById('cloneAccMaxPostsPerDay').value),
+          warmupMode: shadowRoot.getElementById('cloneAccWarmupMode').checked,
+          warmupDays: parseInt(shadowRoot.getElementById('cloneAccWarmupDays').value),
+          warmupMaxPosts: parseInt(shadowRoot.getElementById('cloneAccWarmupMaxPosts').value),
+          errorDelay: parseInt(shadowRoot.getElementById('cloneAccErrorDelay').value),
+          maxRetry: parseInt(shadowRoot.getElementById('cloneAccMaxRetry').value),
+          aggressive: shadowRoot.getElementById('cloneAccAggressive').value
+        };
+      }
+      
+      chrome.storage.local.set({ [key]: settings }, () => {
+        showFeedback(shadowRoot, '✅ Lưu cài đặt thành công!', 'success');
+      });
+    }
+
+    function resetSettings(shadowRoot, accountType) {
+      const key = getStorageKey(accountType);
+      chrome.storage.local.remove([key], () => {
+        loadSettings(shadowRoot, accountType);
+        showFeedback(shadowRoot, '🔄 Khôi phục mặc định thành công!', 'warning');
+      });
+    }
+
+    function showFeedback(shadowRoot, message, type) {
+      const feedbackEl = shadowRoot.getElementById('settingsFeedback');
+      feedbackEl.textContent = message;
+      feedbackEl.style.display = 'block';
+      feedbackEl.style.background = type === 'success' ? '#d1fae5' : '#fef3c7';
+      feedbackEl.style.color = type === 'success' ? '#065f46' : '#92400e';
+      feedbackEl.style.borderLeft = `4px solid ${type === 'success' ? '#10b981' : '#f59e0b'}`;
+      
+      setTimeout(() => {
+        feedbackEl.style.display = 'none';
+      }, 3000);
+    }
+
+    // Save button
+    const btnSaveSettings = shadow.getElementById('btnSaveSettings');
+    if (btnSaveSettings) {
+      btnSaveSettings.addEventListener('click', () => {
+        const activeAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+        if (activeAccountType) {
+          saveSettings(shadow, activeAccountType);
+        }
+      });
+    }
+
+    // Reset button
+    const btnResetSettings = shadow.getElementById('btnResetSettings');
+    if (btnResetSettings) {
+      btnResetSettings.addEventListener('click', () => {
+        const activeAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+        if (activeAccountType && confirm('Bạn chắc chắn muốn khôi phục mặc định?')) {
+          resetSettings(shadow, activeAccountType);
+        }
+      });
+    }
+
+    // ========== MAIN POSTING LOGIC ==========
+    const btnSearch = shadow.getElementById('btnSearch');
+    const searchInput = shadow.getElementById('searchInput');
+    const groupsBody = shadow.getElementById('groupsBody');
+    const selectAll = shadow.getElementById('selectAll');
+    const selectedCount = shadow.getElementById('selectedCount');
+    const btnStartPost = shadow.getElementById('btnStartPost');
+    const logContainer = shadow.getElementById('logContainer');
+
+    let currentGroups = [];
+    
     function addLog(message, type = 'info') {
       const time = new Date().toLocaleTimeString('en-US', { hour12: false });
       const logItem = document.createElement('div');
       logItem.className = `log-item ${type}`;
-      let color = '#e5e7eb';
-      if (type === 'success') color = '#34d399';
-      if (type === 'error') color = '#ef4444';
-      if (type === 'warning') color = '#fbbf24';
-      logItem.style.color = color;
-      logItem.style.marginBottom = '8px';
-      logItem.innerHTML = `<span style="color:#2563eb; font-weight: bold;">[${time}]</span> <span style="color:#1e293b; font-weight: 500;">${message}</span>`;
-      els.logContainer.appendChild(logItem);
-      els.logContainer.scrollTop = els.logContainer.scrollHeight;
+      logItem.innerHTML = `<span class="time">[${time}]</span> ${message}`;
+      logContainer.appendChild(logItem);
+      logContainer.scrollTop = logContainer.scrollHeight;
     }
+
+    btnSearch.addEventListener('click', () => {
+      const keyword = searchInput.value.trim();
+      if (!keyword) return alert('Vui lòng nhập từ khóa tìm kiếm (Ví dụ: mua bán acc fifa)');
+      
+      btnSearch.disabled = true;
+      btnSearch.textContent = 'Đang quét...';
+      groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Đang quét nhóm trên Facebook... Vui lòng đợi khoảng vài giây.</td></tr>';
+      currentGroups = [];
+      updateSelection();
+
+      chrome.runtime.sendMessage({ action: 'searchGroups', keyword }, (response) => {
+        btnSearch.disabled = false;
+        btnSearch.textContent = 'Quét Nhóm';
+
+        if (!response || !response.success) {
+          addLog(`Lỗi khi quét nhóm: ${response?.error || 'Lỗi kết nối background'}`, 'error');
+          groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Đã xảy ra lỗi khi quét. Xem nhật ký.</td></tr>';
+          return;
+        }
+
+        try {
+          if (response.data.errors) {
+            throw new Error("FB API Error: " + JSON.stringify(response.data.errors[0]));
+          }
+          if (!response.data.data) {
+            console.error("RAW FB RESPONSE:", response.data);
+            throw new Error("Không có data trả về. (RAW: " + JSON.stringify(response.data).substring(0, 100) + "...)");
+          }
+          const serpData = response.data.data.serpResponse || response.data.data.serpBase;
+          const edges = serpData?.results?.edges;
+          
+          if (!edges || edges.length === 0) {
+            throw new Error("Không tìm thấy kết quả nào từ Facebook");
+          }
+
+          edges.forEach(edge => {
+            const strategy = edge.rendering_strategy || edge.relay_rendering_strategy;
+            if (strategy && strategy.view_model && strategy.view_model.profile) {
+              const group = strategy.view_model.profile;
+              if (group.__typename === "Group") {
+                currentGroups.push({
+                  id: group.id,
+                  name: group.name,
+                  members: group.group_member_count ? `${(group.group_member_count / 1000).toFixed(1)}K` : 'Không rõ',
+                  privacy: 'Công khai'
+                });
+              }
+            }
+          });
+
+          if (currentGroups.length === 0) {
+            addLog('Không trích xuất được UID từ kết quả tìm kiếm. Facebook có thể thay đổi cấu trúc.', 'warning');
+          }
+
+          renderGroups();
+          addLog(`Quét thành công ${currentGroups.length} nhóm.`, 'success');
+        } catch (e) {
+          addLog(`Lỗi parse dữ liệu Facebook: ${e.message}. Có thể tài khoản chưa đăng nhập hoặc cookie bị lỗi.`, 'error');
+          groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Không thể phân tích dữ liệu. Vui lòng thử lại.</td></tr>';
+        }
+      });
+    });
 
     function renderGroups() {
       if (currentGroups.length === 0) {
-        els.groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Không tìm thấy nhóm nào phù hợp.</td></tr>';
+        groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Không tìm thấy nhóm nào phù hợp.</td></tr>';
         return;
       }
 
-      els.groupsBody.innerHTML = currentGroups.map((g, index) => `
+      groupsBody.innerHTML = currentGroups.map((g, index) => `
         <tr>
           <td><input type="checkbox" class="group-checkbox" data-index="${index}" checked></td>
           <td><strong>${g.name}</strong></td>
@@ -453,72 +649,22 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       shadow.querySelectorAll('.group-checkbox').forEach(cb => {
         cb.addEventListener('change', updateSelection);
       });
-
-      els.selectAll.checked = true;
+      
+      selectAll.checked = true;
       updateSelection();
     }
 
-    function updateSelection() {
-      const checked = shadow.querySelectorAll('.group-checkbox:checked').length;
-      els.selectedCount.textContent = `Đã chọn: ${checked} nhóm`;
-    }
-
-    els.selectAll.addEventListener('change', (e) => {
+    selectAll.addEventListener('change', (e) => {
       shadow.querySelectorAll('.group-checkbox').forEach(cb => {
         cb.checked = e.target.checked;
       });
       updateSelection();
     });
 
-    els.searchBtn.addEventListener('click', async () => {
-      const keyword = els.keyword.value.trim();
-      if (!keyword) return alert('Vui lòng nhập từ khóa tìm kiếm (Ví dụ: mua bán acc fifa)');
-
-      els.searchBtn.disabled = true;
-      els.searchBtn.textContent = 'Đang quét...';
-      els.groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state" style="color:#60a5fa">Đang quét nhóm trực tiếp trên Facebook... Vui lòng đợi.</td></tr>';
-      currentGroups = [];
-      updateSelection();
-
-      try {
-        const response = await searchGroupsFB(keyword);
-        if (response.errors) {
-          throw new Error("FB API Error: " + JSON.stringify(response.errors[0]));
-        }
-        if (!response.data) {
-          throw new Error("Không có data trả về. (RAW: " + JSON.stringify(response).substring(0, 100) + "...)");
-        }
-        const serpData = response.data.serpResponse || response.data.serpBase;
-        const edges = serpData?.results?.edges;
-
-        if (!edges || edges.length === 0) {
-          throw new Error("Không tìm thấy kết quả nào từ Facebook");
-        }
-
-        edges.forEach(edge => {
-          const strategy = edge.rendering_strategy || edge.relay_rendering_strategy;
-          if (strategy && strategy.view_model && strategy.view_model.profile) {
-            const group = strategy.view_model.profile;
-            if (group.__typename === "Group") {
-              currentGroups.push({
-                id: group.id,
-                name: group.name,
-                members: group.group_member_count ? `${(group.group_member_count / 1000).toFixed(1)}K` : 'Không rõ'
-              });
-            }
-          }
-        });
-
-        renderGroups();
-        addLog(`Quét thành công ${currentGroups.length} nhóm.`, 'success');
-      } catch (e) {
-        addLog(`Lỗi quét nhóm: ${e.message}`, 'error');
-        els.groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state" style="color:#ef4444">Không thể phân tích dữ liệu. Xem nhật ký.</td></tr>';
-      } finally {
-        els.searchBtn.disabled = false;
-        els.searchBtn.textContent = 'Quét Nhóm';
-      }
-    });
+    function updateSelection() {
+      const checked = shadow.querySelectorAll('.group-checkbox:checked').length;
+      selectedCount.textContent = `Đã chọn: ${checked} nhóm`;
+    }
 
     function spinText(text) {
       const matches = text.match(/\{[^{}]*\}/g);
@@ -533,130 +679,89 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       return spun;
     }
 
-    els.btnUploadImage?.addEventListener('click', async () => {
-      const files = els.postImage.files;
-      if (files.length === 0) return alert('Vui lòng chọn ít nhất 1 ảnh trước khi tải lên!');
+    // 🔥 HÀM LƯỚI DELAY TỪ SETTINGS
+    function getRandomDelay(accountType) {
+      return new Promise((resolve) => {
+        const key = getStorageKey(accountType);
+        chrome.storage.local.get([key], (result) => {
+          const settings = result[key] || {};
+          let minDelay, maxDelay;
+          
+          if (accountType === 'old-account') {
+            minDelay = settings.minDelay || 60;
+            maxDelay = settings.maxDelay || 180;
+          } else {
+            minDelay = settings.minDelay || 20;
+            maxDelay = settings.maxDelay || 90;
+          }
+          
+          const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+          resolve(delay);
+        });
+      });
+    }
 
-      els.btnUploadImage.disabled = true;
-      els.btnUploadImage.textContent = 'Đang tải...';
-      globalImageIds = [];
-      els.imagePreview.style.display = 'block';
-      els.imagePreview.innerHTML = `Đang tải ${files.length} ảnh...`;
-
-      let successCount = 0;
-      try {
-        for (let i = 0; i < files.length; i++) {
-          addLog(`Đang tải ảnh ${i + 1}/${files.length} ("${files[i].name}")...`, 'info');
-          const id = await uploadImageFB(files[i]);
-          globalImageIds.push(id);
-          successCount++;
-          els.imagePreview.innerHTML = `Đã tải ${successCount}/${files.length} ảnh...`;
-        }
-
-        els.imagePreview.innerHTML = `✅ Đã tải thành công ${successCount} ảnh!<br><span style="color:#059669">Bây giờ bạn có thể bắt đầu Đăng Hàng Loạt.</span>`;
-        addLog(`✅ Tải xong ${successCount} ảnh!`, 'success');
-      } catch (err) {
-        els.imagePreview.innerHTML = `❌ Lỗi tải ảnh: ${err.message}<br>Đã tải được ${successCount} ảnh.`;
-        addLog(`❌ Lỗi tải ảnh: ${err.message}`, 'error');
-      } finally {
-        els.btnUploadImage.disabled = false;
-        els.btnUploadImage.textContent = 'Tải Ảnh Lên';
-      }
-    });
-
-    els.btnPausePost?.addEventListener('click', () => {
-      if (!isPosting) return;
-      isPaused = !isPaused;
-      if (isPaused) {
-        els.btnPausePost.textContent = '▶ Tiếp Tục';
-        els.btnPausePost.style.background = '#10b981';
-        addLog('⏸ Đã tạm dừng quá trình đăng bài!', 'warning');
-      } else {
-        els.btnPausePost.textContent = '⏸ Tạm Dừng';
-        els.btnPausePost.style.background = '#f59e0b';
-        addLog('▶ Tiếp tục đăng bài...', 'info');
-      }
-    });
-
-    els.btnStartPost.addEventListener('click', async () => {
-      if (isPosting) return;
+    btnStartPost.addEventListener('click', async () => {
       const checkedBoxes = shadow.querySelectorAll('.group-checkbox:checked');
       if (checkedBoxes.length === 0) return alert('Vui lòng chọn ít nhất 1 nhóm để đăng!');
-
-      const rawContent = els.postContent.value.trim();
+      
+      const rawContent = shadow.getElementById('postContent').value.trim();
       if (!rawContent) return alert('Vui lòng nhập nội dung bài viết!');
 
-      const delaySecs = parseInt(els.delaySeconds.value) || 60;
+      const manualDelay = parseInt(shadow.getElementById('delaySeconds').value) || 60;
+      
+      // 🔥 PHÁT HIỆN LOẠI TÀI KHOẢN ĐANG CHỌN
+      const activeAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type') || 'old-account';
 
       let targetGroups = Array.from(checkedBoxes).map(cb => currentGroups[cb.dataset.index]);
 
-      els.btnStartPost.disabled = true;
-      if (els.btnPausePost) {
-        els.btnPausePost.style.display = 'block';
-        els.btnPausePost.textContent = '⏸ Tạm Dừng';
-        els.btnPausePost.style.background = '#f59e0b';
-      }
-      isPosting = true;
-      isPaused = false;
-
-      const imageMode = els.imageMode ? els.imageMode.value : 'random';
-
-      addLog(`Bắt đầu chiến dịch đăng vào ${targetGroups.length} nhóm. Tần suất: ${delaySecs}s/bài...`, 'info');
+      btnStartPost.disabled = true;
+      addLog(`🎯 Chế độ: ${activeAccountType === 'old-account' ? 'Nick Cũ 👴' : 'Nick Clone 👯'}`, 'info');
+      addLog(`Bắt đầu chiến dịch đăng vào ${targetGroups.length} nhóm...`, 'info');
 
       for (let i = 0; i < targetGroups.length; i++) {
-        while (isPaused) {
-          await new Promise(r => setTimeout(r, 1000));
-        }
         const group = targetGroups[i];
         const spunContent = spinText(rawContent);
+        
+        addLog(`[${i+1}/${targetGroups.length}] Đang gửi bài: "${spunContent.substring(0, 30)}..." vào "${group.name}"...`, 'warning');
+        
+        const success = await new Promise(resolve => {
+          chrome.runtime.sendMessage({
+            action: 'createPost',
+            groupId: group.id,
+            text: spunContent
+          }, response => {
+            if (response && response.success && !response.data.errors) {
+              resolve(true);
+            } else {
+              addLog(`❌ Chi tiết lỗi FB: ${JSON.stringify(response?.data?.errors || response?.error || 'Unknown')}`, 'error');
+              resolve(false);
+            }
+          });
+        });
 
-        let currentImageIds = [];
-        if (globalImageIds.length > 0) {
-          if (imageMode === 'sequential') {
-            const seqIdx = i % globalImageIds.length;
-            currentImageIds = [globalImageIds[seqIdx]];
-          } else {
-            const randIdx = Math.floor(Math.random() * globalImageIds.length);
-            currentImageIds = [globalImageIds[randIdx]];
-          }
-        }
-
-        els.btnStartPost.textContent = `⏳ Đang đăng (${i + 1}/${targetGroups.length})...`;
-        addLog(`[${i + 1}/${targetGroups.length}] Đang gửi bài: "${spunContent.substring(0, 30)}..." vào "${group.name}"...`, 'warning');
-
-        try {
-          const response = await createGroupPostFB(group.id, spunContent, currentImageIds);
-
-          if (response.errors) {
-            throw new Error(response.errors[0].message || "FB chặn hành động");
-          }
-
-          if (response.data && response.data.story_create) {
-            addLog(`✅ Đăng thành công vào "${group.name}"!`, 'success');
-          } else {
-            addLog(`⚠️ Đăng nghi vấn thất bại vào "${group.name}".`, 'warning');
-          }
-        } catch (e) {
-          addLog(`❌ Lỗi đăng nhóm "${group.name}": ${e.message}`, 'error');
+        if (success) {
+          addLog(`✅ Đăng thành công vào nhóm "${group.name}"!`, 'success');
+        } else {
+          addLog(`❌ Thất bại khi đăng vào nhóm "${group.name}".`, 'error');
         }
 
         if (i < targetGroups.length - 1) {
-          let waitTime = delaySecs;
-          while (waitTime > 0) {
-            if (!isPaused) {
-              els.btnStartPost.textContent = `⏳ Đang chờ ${waitTime}s... (${i + 1}/${targetGroups.length})`;
-              waitTime--;
-            }
-            await new Promise(r => setTimeout(r, 1000));
-          }
+          // 🔥 LẤY DELAY TỪ SETTINGS
+          const dynamicDelay = await getRandomDelay(activeAccountType);
+          addLog(`⏳ Chờ ${dynamicDelay} giây (Delay tự động từ cài đặt)...`, 'warning');
+          await new Promise(r => setTimeout(r, dynamicDelay * 1000));
         }
       }
 
-      isPosting = false;
-      if (els.btnPausePost) els.btnPausePost.style.display = 'none';
-      els.btnStartPost.disabled = false;
-      els.btnStartPost.textContent = '🚀 Bắt Đầu Đăng Hàng Loạt';
-      addLog('🎉 Đã hoàn tất tiến trình đăng bài!', 'success');
+      addLog('🎉 Chiến dịch đăng bài đã hoàn tất thành công!', 'success');
+      btnStartPost.disabled = false;
     });
+
+    // Load initial settings
+    const firstAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+    if (firstAccountType) {
+      loadSettings(shadow, firstAccountType);
+    }
   }
 }
