@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Tìm và Đăng Bài Vào Nhóm (FBToolkit)",
+  "version": "1.0",
+  "description": "Công cụ Premium tìm kiếm nhóm và đăng bài tự động trên Facebook",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_title": "Mở Dashboard",
+    "default_icon": "icon16.png"
+  },
+  "permissions": [
+    "storage",
+    "cookies",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "*://*.facebook.com/*",
+    "https://fbtoolkit.com/*",
+    "https://*.fbtoolkit.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.facebook.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard.html", "dashboard.css"],
+      "matches": ["*://*.facebook.com/*"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}

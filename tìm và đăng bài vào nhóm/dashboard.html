@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tìm và Đăng Bài Nhóm - FBToolkit</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="app-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <header class="app-header">
+      <h1><span class="gradient-text">FBToolkit</span> Auto Poster</h1>
+      <p>Tìm kiếm nhóm & đăng bài tự động hàng loạt cực nhanh và an toàn</p>
+    </header>
+
+    <div class="main-content">
+      <!-- Search Section -->
+      <section class="card search-section glass-panel">
+        <h2><span class="icon">🔍</span> 1. Tìm Kiếm Nhóm</h2>
+        <div class="input-group">
+          <input type="text" id="searchInput" placeholder="Nhập từ khóa (vd: mua bán acc fifa)...">
+          <button id="btnSearch" class="btn primary">Quét Nhóm</button>
+        </div>
+        <div class="results-container">
+          <table class="groups-table">
+            <thead>
+              <tr>
+                <th width="40"><input type="checkbox" id="selectAll"></th>
+                <th>Tên Nhóm</th>
+                <th>UID Nhóm</th>
+                <th width="120">Thành viên</th>
+              </tr>
+            </thead>
+            <tbody id="groupsBody">
+              <tr>
+                <td colspan="4" class="empty-state">Chưa có dữ liệu. Hãy nhập từ khóa để quét.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="selectedCount">Đã chọn: 0 nhóm</span>
+        </div>
+      </section>
+
+      <!-- Post Configuration Section -->
+      <section class="card config-section glass-panel">
+        <h2><span class="icon">⚙️</span> 2. Cấu Hình Đăng Bài</h2>
+
+        <div class="form-group">
+          <label>Nội dung đăng (Hỗ trợ Spintax: {từ 1|từ 2})</label>
+          <textarea id="postContent" rows="4" placeholder="Nhập nội dung bài viết. Ví dụ: {Tìm mua|Cần mua} acc fifa {sll|số lượng lớn}..."></textarea>
+          <small class="hint" style="color: #475569; font-weight: 500;">Nội dung sẽ được Spin ngẫu nhiên cho mỗi bài đăng để tránh bị báo cáo Spam.</small>
+        </div>
+
+        <div class="settings-grid">
+          <div class="form-group">
+            <label>Đính kèm Ảnh (Hỗ trợ nhiều ảnh)</label>
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="file" id="postImage" accept="image/png, image/jpeg, image/gif" multiple style="background: var(--input-bg); border: 1px solid var(--input-border); padding: 0.5rem; width: 100%; flex: 1;">
+              <button id="btnUploadImage" class="btn" style="background: #10b981; color: white; white-space: nowrap;">Tải Ảnh Lên</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+              <label for="imageMode" style="font-weight: 500; margin-bottom: 0;">Chế độ Ảnh:</label>
+              <select id="imageMode" style="padding: 6px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg);">
+                <option value="random">Chọn ngẫu nhiên 1 ảnh mỗi bài</option>
+                <option value="sequential">Xoay vòng từng ảnh mỗi bài</option>
+              </select>
+            </div>
+            <div id="imagePreview" style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 14px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Delay giữa 2 bài (giây)</label>
+            <input type="number" id="delaySeconds" value="60" min="5">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+          <button id="btnStartPost" class="btn action-btn pulse" style="flex: 2;">Bắt Đầu Đăng Bài</button>
+          <button id="btnPausePost" class="btn" style="flex: 1; background: #f59e0b; color: white; display: none;">Tạm Dừng</button>
+        </div>
+      </section>
+
+      <!-- Log Section -->
+      <section class="card log-section glass-panel">
+        <h2><span class="icon">📜</span> 3. Nhật Ký Đăng Bài</h2>
+        <div id="logContainer" class="log-container">
+          <div class="log-item info">
+            <span class="time" style="color: #3b82f6; font-weight: bold;">[--:--:--]</span> Hệ thống sẵn sàng hoạt động...
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="dashboard.js"></script>
+</body>
+
+</html>
