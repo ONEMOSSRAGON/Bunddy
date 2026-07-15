@@ -1,4 +1,175 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // ========== TAB SWITCHING ==========
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.getAttribute('data-tab');
+      
+      // Remove active from all buttons
+      tabBtns.forEach(b => b.classList.remove('active'));
+      
+      // Remove active from all content
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      // Add active to clicked button
+      btn.classList.add('active');
+      
+      // Add active to corresponding content
+      const targetTab = document.getElementById(`${tabName}-tab`);
+      if (targetTab) {
+        targetTab.classList.add('active');
+      }
+    });
+  });
+
+  // ========== ACCOUNT TYPE SELECTOR ==========
+  const accountTypeBtns = document.querySelectorAll('.account-type-btn');
+  const accountSettingsPanels = document.querySelectorAll('.account-settings-panel');
+
+  accountTypeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const accountType = btn.getAttribute('data-type');
+      
+      // Remove active from all buttons
+      accountTypeBtns.forEach(b => b.classList.remove('active'));
+      
+      // Hide all panels
+      accountSettingsPanels.forEach(panel => panel.style.display = 'none');
+      
+      // Add active to clicked button
+      btn.classList.add('active');
+      
+      // Show corresponding panel
+      const targetPanel = document.getElementById(`${accountType}-settings`);
+      if (targetPanel) {
+        targetPanel.style.display = 'block';
+      }
+      
+      // Load settings from storage
+      loadSettings(accountType);
+    });
+  });
+
+  // ========== SETTINGS STORAGE ==========
+  const STORAGE_KEYS = {
+    oldAcc: 'fbtoolkit_old_account_settings',
+    cloneAcc: 'fbtoolkit_clone_account_settings'
+  };
+
+  function getStorageKey(accountType) {
+    return accountType === 'old-account' ? STORAGE_KEYS.oldAcc : STORAGE_KEYS.cloneAcc;
+  }
+
+  function loadSettings(accountType) {
+    const key = getStorageKey(accountType);
+    chrome.storage.local.get([key], (result) => {
+      const settings = result[key] || {};
+      
+      if (accountType === 'old-account') {
+        document.getElementById('oldAccMinDelay').value = settings.minDelay || 60;
+        document.getElementById('oldAccMaxDelay').value = settings.maxDelay || 180;
+        document.getElementById('oldAccMaxPostsPerDay').value = settings.maxPostsPerDay || 20;
+        document.getElementById('oldAccSafeMode').checked = settings.safeMode !== false;
+        document.getElementById('oldAccErrorDelay').value = settings.errorDelay || 300;
+        document.getElementById('oldAccMaxRetry').value = settings.maxRetry || 3;
+      } else {
+        document.getElementById('cloneAccMinDelay').value = settings.minDelay || 20;
+        document.getElementById('cloneAccMaxDelay').value = settings.maxDelay || 90;
+        document.getElementById('cloneAccMaxPostsPerDay').value = settings.maxPostsPerDay || 50;
+        document.getElementById('cloneAccWarmupMode').checked = settings.warmupMode !== false;
+        document.getElementById('cloneAccWarmupDays').value = settings.warmupDays || 3;
+        document.getElementById('cloneAccWarmupMaxPosts').value = settings.warmupMaxPosts || 10;
+        document.getElementById('cloneAccErrorDelay').value = settings.errorDelay || 180;
+        document.getElementById('cloneAccMaxRetry').value = settings.maxRetry || 2;
+        document.getElementById('cloneAccAggressive').value = settings.aggressive || 'normal';
+      }
+    });
+  }
+
+  function saveSettings(accountType) {
+    const key = getStorageKey(accountType);
+    let settings = {};
+    
+    if (accountType === 'old-account') {
+      settings = {
+        minDelay: parseInt(document.getElementById('oldAccMinDelay').value),
+        maxDelay: parseInt(document.getElementById('oldAccMaxDelay').value),
+        maxPostsPerDay: parseInt(document.getElementById('oldAccMaxPostsPerDay').value),
+        safeMode: document.getElementById('oldAccSafeMode').checked,
+        errorDelay: parseInt(document.getElementById('oldAccErrorDelay').value),
+        maxRetry: parseInt(document.getElementById('oldAccMaxRetry').value)
+      };
+    } else {
+      settings = {
+        minDelay: parseInt(document.getElementById('cloneAccMinDelay').value),
+        maxDelay: parseInt(document.getElementById('cloneAccMaxDelay').value),
+        maxPostsPerDay: parseInt(document.getElementById('cloneAccMaxPostsPerDay').value),
+        warmupMode: document.getElementById('cloneAccWarmupMode').checked,
+        warmupDays: parseInt(document.getElementById('cloneAccWarmupDays').value),
+        warmupMaxPosts: parseInt(document.getElementById('cloneAccWarmupMaxPosts').value),
+        errorDelay: parseInt(document.getElementById('cloneAccErrorDelay').value),
+        maxRetry: parseInt(document.getElementById('cloneAccMaxRetry').value),
+        aggressive: document.getElementById('cloneAccAggressive').value
+      };
+    }
+    
+    chrome.storage.local.set({ [key]: settings }, () => {
+      showFeedback('✅ Lưu cài đặt thành công!', 'success');
+    });
+  }
+
+  function resetSettings(accountType) {
+    const key = getStorageKey(accountType);
+    chrome.storage.local.remove([key], () => {
+      loadSettings(accountType);
+      showFeedback('🔄 Khôi phục mặc định thành công!', 'warning');
+    });
+  }
+
+  function showFeedback(message, type) {
+    const feedbackEl = document.getElementById('settingsFeedback');
+    feedbackEl.textContent = message;
+    feedbackEl.style.display = 'block';
+    feedbackEl.style.background = type === 'success' ? '#d1fae5' : '#fef3c7';
+    feedbackEl.style.color = type === 'success' ? '#065f46' : '#92400e';
+    feedbackEl.style.borderLeft = `4px solid ${type === 'success' ? '#10b981' : '#f59e0b'}`;
+    
+    setTimeout(() => {
+      feedbackEl.style.display = 'none';
+    }, 3000);
+  }
+
+  // Save button
+  const btnSaveSettings = document.getElementById('btnSaveSettings');
+  if (btnSaveSettings) {
+    btnSaveSettings.addEventListener('click', () => {
+      const activeAccountType = document.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+      if (activeAccountType) {
+        saveSettings(activeAccountType);
+      }
+    });
+  }
+
+  // Reset button
+  const btnResetSettings = document.getElementById('btnResetSettings');
+  if (btnResetSettings) {
+    btnResetSettings.addEventListener('click', () => {
+      const activeAccountType = document.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+      if (activeAccountType && confirm('Bạn chắc chắn muốn khôi phục mặc định?')) {
+        resetSettings(activeAccountType);
+      }
+    });
+  }
+
+  // Load initial settings on page load
+  const firstAccountType = document.querySelector('.account-type-btn.active')?.getAttribute('data-type');
+  if (firstAccountType) {
+    loadSettings(firstAccountType);
+  }
+
+  // ========== MAIN POSTING LOGIC ==========
   const btnSearch = document.getElementById('btnSearch');
   const searchInput = document.getElementById('searchInput');
   const groupsBody = document.getElementById('groupsBody');
@@ -18,9 +189,6 @@ document.addEventListener('DOMContentLoaded', () => {
     logContainer.scrollTop = logContainer.scrollHeight;
   }
 
-  // Helper function to extract FB tokens for manual frontend fetch if backend message fails
-  // But we send messages to background.js for better isolation
-  
   btnSearch.addEventListener('click', () => {
     const keyword = searchInput.value.trim();
     if (!keyword) return alert('Vui lòng nhập từ khóa tìm kiếm (Ví dụ: mua bán acc fifa)');
@@ -60,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
           const strategy = edge.rendering_strategy || edge.relay_rendering_strategy;
           if (strategy && strategy.view_model && strategy.view_model.profile) {
             const group = strategy.view_model.profile;
-            // Only add if it's a group
             if (group.__typename === "Group") {
               currentGroups.push({
                 id: group.id,
@@ -72,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
 
-        // Some fallback parsing in case the structure is different
         if (currentGroups.length === 0) {
           addLog('Không trích xuất được UID từ kết quả tìm kiếm. Facebook có thể thay đổi cấu trúc.', 'warning');
         }
@@ -141,16 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const rawContent = document.getElementById('postContent').value.trim();
     if (!rawContent) return alert('Vui lòng nhập nội dung bài viết!');
 
-    const isAnonymous = document.getElementById('isAnonymous').checked;
-    const bgColor = document.getElementById('bgColor').value;
     const delaySeconds = parseInt(document.getElementById('delaySeconds').value) || 60;
-    const maxGroupsInput = parseInt(document.getElementById('maxGroups').value) || 10;
 
     let targetGroups = Array.from(checkedBoxes).map(cb => currentGroups[cb.dataset.index]);
-    if (targetGroups.length > maxGroupsInput) {
-      targetGroups = targetGroups.slice(0, maxGroupsInput);
-      addLog(`Giới hạn đăng: Chỉ đăng vào ${maxGroupsInput} nhóm đầu tiên.`, 'warning');
-    }
 
     btnStartPost.disabled = true;
     addLog(`Bắt đầu chiến dịch đăng vào ${targetGroups.length} nhóm. Tần suất: ${delaySeconds}s/bài...`, 'info');
@@ -165,9 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.sendMessage({
           action: 'createPost',
           groupId: group.id,
-          text: spunContent,
-          anonymous: isAnonymous,
-          colorId: bgColor
+          text: spunContent
         }, response => {
           if (response && response.success && !response.data.errors) {
             resolve(true);
