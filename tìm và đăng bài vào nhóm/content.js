@@ -395,6 +395,17 @@ if (typeof window.fbToolkitInjected === 'undefined') {
   }
 
   function initDashboardLogic(shadow) {
+    // ========== SETTINGS STORAGE KEYS ==========
+    const STORAGE_KEYS = {
+      oldAcc: 'fbtoolkit_old_account_settings',
+      cloneAcc: 'fbtoolkit_clone_account_settings',
+      currentAccountType: 'fbtoolkit_current_account_type'
+    };
+
+    function getStorageKey(accountType) {
+      return accountType === 'old-account' ? STORAGE_KEYS.oldAcc : STORAGE_KEYS.cloneAcc;
+    }
+
     // ========== TAB SWITCHING - SHADOW DOM FIX ==========
     const tabBtns = shadow.querySelectorAll('.tab-btn');
     const tabContents = shadow.querySelectorAll('.tab-content');
@@ -428,24 +439,18 @@ if (typeof window.fbToolkitInjected === 'undefined') {
         
         btn.classList.add('active');
         
+        // 🔥 Lưu loại tài khoản hiện tại
+        chrome.storage.local.set({ [STORAGE_KEYS.currentAccountType]: accountType });
+        
         const targetPanel = shadow.getElementById(`${accountType}-settings`);
         if (targetPanel) {
           targetPanel.style.display = 'block';
         }
         
         loadSettings(shadow, accountType);
+        updateDelayInput(shadow, accountType);
       });
     });
-
-    // ========== SETTINGS STORAGE ==========
-    const STORAGE_KEYS = {
-      oldAcc: 'fbtoolkit_old_account_settings',
-      cloneAcc: 'fbtoolkit_clone_account_settings'
-    };
-
-    function getStorageKey(accountType) {
-      return accountType === 'old-account' ? STORAGE_KEYS.oldAcc : STORAGE_KEYS.cloneAcc;
-    }
 
     function loadSettings(shadowRoot, accountType) {
       const key = getStorageKey(accountType);
@@ -469,6 +474,23 @@ if (typeof window.fbToolkitInjected === 'undefined') {
           shadowRoot.getElementById('cloneAccErrorDelay').value = settings.errorDelay || 180;
           shadowRoot.getElementById('cloneAccMaxRetry').value = settings.maxRetry || 2;
           shadowRoot.getElementById('cloneAccAggressive').value = settings.aggressive || 'normal';
+        }
+      });
+    }
+
+    // 🔥 HÀM MỚI: Cập nhật Delay Input từ Settings
+    function updateDelayInput(shadowRoot, accountType) {
+      const key = getStorageKey(accountType);
+      chrome.storage.local.get([key], (result) => {
+        const settings = result[key] || {};
+        const delayInput = shadowRoot.getElementById('delaySeconds');
+        
+        if (accountType === 'old-account') {
+          const avgDelay = Math.floor(((settings.minDelay || 60) + (settings.maxDelay || 180)) / 2);
+          delayInput.value = avgDelay;
+        } else {
+          const avgDelay = Math.floor(((settings.minDelay || 20) + (settings.maxDelay || 90)) / 2);
+          delayInput.value = avgDelay;
         }
       });
     }
@@ -502,6 +524,8 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       
       chrome.storage.local.set({ [key]: settings }, () => {
         showFeedback(shadowRoot, '✅ Lưu cài đặt thành công!', 'success');
+        // 🔥 Cập nhật delay input ngay sau khi lưu
+        updateDelayInput(shadowRoot, accountType);
       });
     }
 
@@ -509,6 +533,7 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       const key = getStorageKey(accountType);
       chrome.storage.local.remove([key], () => {
         loadSettings(shadowRoot, accountType);
+        updateDelayInput(shadowRoot, accountType);
         showFeedback(shadowRoot, '🔄 Khôi phục mặc định thành công!', 'warning');
       });
     }
@@ -578,25 +603,20 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       currentGroups = [];
       updateSelection();
 
-      chrome.runtime.sendMessage({ action: 'searchGroups', keyword }, (response) => {
+      // 🔥 Gọi hàm tìm kiếm trực tiếp thay vì qua background
+      searchGroupsFB(keyword).then(response => {
         btnSearch.disabled = false;
         btnSearch.textContent = 'Quét Nhóm';
 
-        if (!response || !response.success) {
-          addLog(`Lỗi khi quét nhóm: ${response?.error || 'Lỗi kết nối background'}`, 'error');
-          groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Đã xảy ra lỗi khi quét. Xem nhật ký.</td></tr>';
-          return;
-        }
-
         try {
-          if (response.data.errors) {
-            throw new Error("FB API Error: " + JSON.stringify(response.data.errors[0]));
+          if (response.errors) {
+            throw new Error("FB API Error: " + JSON.stringify(response.errors[0]));
           }
-          if (!response.data.data) {
-            console.error("RAW FB RESPONSE:", response.data);
-            throw new Error("Không có data trả về. (RAW: " + JSON.stringify(response.data).substring(0, 100) + "...)");
+          if (!response.data) {
+            console.error("RAW FB RESPONSE:", response);
+            throw new Error("Không có data trả về. (RAW: " + JSON.stringify(response).substring(0, 100) + "...)");
           }
-          const serpData = response.data.data.serpResponse || response.data.data.serpBase;
+          const serpData = response.data.serpResponse || response.data.serpBase;
           const edges = serpData?.results?.edges;
           
           if (!edges || edges.length === 0) {
@@ -628,6 +648,11 @@ if (typeof window.fbToolkitInjected === 'undefined') {
           addLog(`Lỗi parse dữ liệu Facebook: ${e.message}. Có thể tài khoản chưa đăng nhập hoặc cookie bị lỗi.`, 'error');
           groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Không thể phân tích dữ liệu. Vui lòng thử lại.</td></tr>';
         }
+      }).catch(err => {
+        btnSearch.disabled = false;
+        btnSearch.textContent = 'Quét Nhóm';
+        addLog(`Lỗi tìm kiếm: ${err.message}`, 'error');
+        groupsBody.innerHTML = '<tr><td colspan="4" class="empty-state">Đã xảy ra lỗi khi quét.</td></tr>';
       });
     });
 
@@ -708,8 +733,6 @@ if (typeof window.fbToolkitInjected === 'undefined') {
       const rawContent = shadow.getElementById('postContent').value.trim();
       if (!rawContent) return alert('Vui lòng nhập nội dung bài viết!');
 
-      const manualDelay = parseInt(shadow.getElementById('delaySeconds').value) || 60;
-      
       // 🔥 PHÁT HIỆN LOẠI TÀI KHOẢN ĐANG CHỌN
       const activeAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type') || 'old-account';
 
@@ -762,6 +785,7 @@ if (typeof window.fbToolkitInjected === 'undefined') {
     const firstAccountType = shadow.querySelector('.account-type-btn.active')?.getAttribute('data-type');
     if (firstAccountType) {
       loadSettings(shadow, firstAccountType);
+      updateDelayInput(shadow, firstAccountType);
     }
   }
 }
