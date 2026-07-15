@@ -90,6 +90,100 @@ body {
   font-size: 1.1rem;
 }
 
+/* 🔥 TABS */
+.settings-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid var(--panel-border);
+  padding-bottom: 1rem;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.tab-btn:hover {
+  color: var(--primary-color);
+}
+
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* 🔥 ACCOUNT TYPE SELECTOR */
+.account-type-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.account-type-btn {
+  padding: 1.5rem;
+  border: 2px solid var(--input-border);
+  background: var(--input-bg);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.account-type-btn:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.account-type-btn.active {
+  border-color: var(--primary-color);
+  background: rgba(59, 130, 246, 0.05);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.account-type-btn .icon {
+  font-size: 2rem;
+}
+
+.account-type-btn .label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.account-type-btn .desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.account-settings-panel {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .glass-panel {
   background: var(--panel-bg);
   backdrop-filter: blur(16px);
@@ -117,6 +211,13 @@ body {
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
+  color: #1e293b;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
   color: #1e293b;
 }
 
