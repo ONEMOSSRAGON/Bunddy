@@ -19,85 +19,248 @@
       <p>Tìm kiếm nhóm & đăng bài tự động hàng loạt cực nhanh và an toàn</p>
     </header>
 
+    <!-- 🔥 SETTINGS TAB -->
+    <div class="settings-tabs">
+      <button class="tab-btn active" data-tab="main">📮 Đăng Bài</button>
+      <button class="tab-btn" data-tab="account-settings">⚙️ Cài Đặt Tài Khoản</button>
+    </div>
+
     <div class="main-content">
-      <!-- Search Section -->
-      <section class="card search-section glass-panel">
-        <h2><span class="icon">🔍</span> 1. Tìm Kiếm Nhóm</h2>
-        <div class="input-group">
-          <input type="text" id="searchInput" placeholder="Nhập từ khóa (vd: mua bán acc fifa)...">
-          <button id="btnSearch" class="btn primary">Quét Nhóm</button>
-        </div>
-        <div class="results-container">
-          <table class="groups-table">
-            <thead>
-              <tr>
-                <th width="40"><input type="checkbox" id="selectAll"></th>
-                <th>Tên Nhóm</th>
-                <th>UID Nhóm</th>
-                <th width="120">Thành viên</th>
-              </tr>
-            </thead>
-            <tbody id="groupsBody">
-              <tr>
-                <td colspan="4" class="empty-state">Chưa có dữ liệu. Hãy nhập từ khóa để quét.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="table-footer">
-          <span id="selectedCount">Đã chọn: 0 nhóm</span>
-        </div>
-      </section>
-
-      <!-- Post Configuration Section -->
-      <section class="card config-section glass-panel">
-        <h2><span class="icon">⚙️</span> 2. Cấu Hình Đăng Bài</h2>
-
-        <div class="form-group">
-          <label>Nội dung đăng (Hỗ trợ Spintax: {từ 1|từ 2})</label>
-          <textarea id="postContent" rows="4" placeholder="Nhập nội dung bài viết. Ví dụ: {Tìm mua|Cần mua} acc fifa {sll|số lượng lớn}..."></textarea>
-          <small class="hint" style="color: #475569; font-weight: 500;">Nội dung sẽ được Spin ngẫu nhiên cho mỗi bài đăng để tránh bị báo cáo Spam.</small>
-        </div>
-
-        <div class="settings-grid">
-          <div class="form-group">
-            <label>Đính kèm Ảnh (Hỗ trợ nhiều ảnh)</label>
-            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
-              <input type="file" id="postImage" accept="image/png, image/jpeg, image/gif" multiple style="background: var(--input-bg); border: 1px solid var(--input-border); padding: 0.5rem; width: 100%; flex: 1;">
-              <button id="btnUploadImage" class="btn" style="background: #10b981; color: white; white-space: nowrap;">Tải Ảnh Lên</button>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
-              <label for="imageMode" style="font-weight: 500; margin-bottom: 0;">Chế độ Ảnh:</label>
-              <select id="imageMode" style="padding: 6px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg);">
-                <option value="random">Chọn ngẫu nhiên 1 ảnh mỗi bài</option>
-                <option value="sequential">Xoay vòng từng ảnh mỗi bài</option>
-              </select>
-            </div>
-            <div id="imagePreview" style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 14px;"></div>
+      <!-- TAB 1: MAIN POSTING -->
+      <div id="main-tab" class="tab-content active">
+        <!-- Search Section -->
+        <section class="card search-section glass-panel">
+          <h2><span class="icon">🔍</span> 1. Tìm Kiếm Nhóm</h2>
+          <div class="input-group">
+            <input type="text" id="searchInput" placeholder="Nhập từ khóa (vd: mua bán acc fifa)...">
+            <button id="btnSearch" class="btn primary">Quét Nhóm</button>
           </div>
+          <div class="results-container">
+            <table class="groups-table">
+              <thead>
+                <tr>
+                  <th width="40"><input type="checkbox" id="selectAll"></th>
+                  <th>Tên Nhóm</th>
+                  <th>UID Nhóm</th>
+                  <th width="120">Thành viên</th>
+                </tr>
+              </thead>
+              <tbody id="groupsBody">
+                <tr>
+                  <td colspan="4" class="empty-state">Chưa có dữ liệu. Hãy nhập từ khóa để quét.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <span id="selectedCount">Đã chọn: 0 nhóm</span>
+          </div>
+        </section>
+
+        <!-- Post Configuration Section -->
+        <section class="card config-section glass-panel">
+          <h2><span class="icon">⚙️</span> 2. Cấu Hình Đăng Bài</h2>
 
           <div class="form-group">
-            <label>Delay giữa 2 bài (giây)</label>
-            <input type="number" id="delaySeconds" value="60" min="5">
+            <label>Nội dung đăng (Hỗ trợ Spintax: {từ 1|từ 2})</label>
+            <textarea id="postContent" rows="4" placeholder="Nhập nội dung bài viết. Ví dụ: {Tìm mua|Cần mua} acc fifa {sll|số lượng lớn}..."></textarea>
+            <small class="hint" style="color: #475569; font-weight: 500;">Nội dung sẽ được Spin ngẫu nhiên cho mỗi bài đăng để tránh bị báo cáo Spam.</small>
           </div>
-        </div>
 
-        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-          <button id="btnStartPost" class="btn action-btn pulse" style="flex: 2;">Bắt Đầu Đăng Bài</button>
-          <button id="btnPausePost" class="btn" style="flex: 1; background: #f59e0b; color: white; display: none;">Tạm Dừng</button>
-        </div>
-      </section>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Đính kèm Ảnh (Hỗ trợ nhiều ảnh)</label>
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="file" id="postImage" accept="image/png, image/jpeg, image/gif" multiple style="background: var(--input-bg); border: 1px solid var(--input-border); padding: 0.5rem; flex: 1;">
+                <button id="btnUploadImage" class="btn" style="background: #10b981; color: white; white-space: nowrap;">Tải Ảnh Lên</button>
+              </div>
 
-      <!-- Log Section -->
-      <section class="card log-section glass-panel">
-        <h2><span class="icon">📜</span> 3. Nhật Ký Đăng Bài</h2>
-        <div id="logContainer" class="log-container">
-          <div class="log-item info">
-            <span class="time" style="color: #3b82f6; font-weight: bold;">[--:--:--]</span> Hệ thống sẵn sàng hoạt động...
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.5rem;">
+                <label for="imageMode" style="font-weight: 500; margin-bottom: 0;">Chế độ Ảnh:</label>
+                <select id="imageMode" style="padding: 6px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg);">
+                  <option value="random">Chọn ngẫu nhiên 1 ảnh mỗi bài</option>
+                  <option value="sequential">Xoay vòng từng ảnh mỗi bài</option>
+                </select>
+              </div>
+              <div id="imagePreview" style="display: none; padding: 10px; background: #f8fafc; border-radius: 8px; font-size: 14px;"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Delay giữa 2 bài (giây)</label>
+              <input type="number" id="delaySeconds" value="60" min="5">
+            </div>
           </div>
-        </div>
-      </section>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button id="btnStartPost" class="btn action-btn pulse" style="flex: 2;">🚀 Bắt Đầu Đăng Bài</button>
+            <button id="btnPausePost" class="btn" style="flex: 1; background: #f59e0b; color: white; display: none;">⏸ Tạm Dừng</button>
+          </div>
+        </section>
+
+        <!-- Log Section -->
+        <section class="card log-section glass-panel">
+          <h2><span class="icon">📜</span> 3. Nhật Ký Đăng Bài</h2>
+          <div id="logContainer" class="log-container">
+            <div class="log-item info">
+              <span class="time" style="color: #3b82f6; font-weight: bold;">[--:--:--]</span> Hệ thống sẵn sàng hoạt động...
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- TAB 2: ACCOUNT SETTINGS -->
+      <div id="account-settings-tab" class="tab-content">
+        <section class="card glass-panel">
+          <h2><span class="icon">⚙️</span> Cài Đặt Tài Khoản</h2>
+
+          <!-- Account Type Selection -->
+          <div class="form-group">
+            <label style="font-weight: 600; font-size: 16px;">Loại Tài Khoản</label>
+            <div class="account-type-selector">
+              <button class="account-type-btn active" data-type="old-account">
+                <span class="icon">👴</span>
+                <span class="label">Tài Khoản Cũ</span>
+                <span class="desc">Nick cũ, Warm-up trước</span>
+              </button>
+              <button class="account-type-btn" data-type="clone-account">
+                <span class="icon">👯</span>
+                <span class="label">Tài Khoản Clone</span>
+                <span class="desc">Nick mới, Vừa tạo</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- OLD ACCOUNT SETTINGS -->
+          <div id="old-account-settings" class="account-settings-panel">
+            <h3 style="border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 15px;">📋 Cài Đặt Cho Tài Khoản Cũ</h3>
+            
+            <div class="settings-grid">
+              <div class="form-group">
+                <label>⏱️ Delay Tối Thiểu (giây)</label>
+                <input type="number" id="oldAccMinDelay" value="60" min="30" max="300">
+                <small style="color: #64748b;">Thời gian chờ tối thiểu giữa các bài. Nên từ 60-120 giây</small>
+              </div>
+
+              <div class="form-group">
+                <label>⏱️ Delay Tối Đa (giây)</label>
+                <input type="number" id="oldAccMaxDelay" value="180" min="30" max="600">
+                <small style="color: #64748b;">Delay sẽ random trong khoảng này để tránh bị phát hiện</small>
+              </div>
+
+              <div class="form-group">
+                <label>📊 Bài Đăng Tối Đa Mỗi Ngày</label>
+                <input type="number" id="oldAccMaxPostsPerDay" value="20" min="1" max="100">
+                <small style="color: #64748b;">Số bài tối đa để tránh treo tài khoản</small>
+              </div>
+
+              <div class="form-group">
+                <label>🛑 Chế độ An Toàn</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="checkbox" id="oldAccSafeMode" checked>
+                  <label for="oldAccSafeMode" style="font-weight: 400;">Bật chế độ an toàn (Delay tự động tăng nếu bị block)</label>
+                </div>
+                <small style="color: #64748b;">Khi đăng bị lỗi, tự động tăng delay để tránh bị lock acc</small>
+              </div>
+
+              <div class="form-group">
+                <label>⏸️ Delay Khi Bị Lỗi (giây)</label>
+                <input type="number" id="oldAccErrorDelay" value="300" min="60" max="1800">
+                <small style="color: #64748b;">Chờ bao lâu khi gặp lỗi trước khi retry</small>
+              </div>
+
+              <div class="form-group">
+                <label>🔄 Số Lần Retry Tối Đa</label>
+                <input type="number" id="oldAccMaxRetry" value="3" min="1" max="10">
+                <small style="color: #64748b;">Thử lại bao nhiêu lần nếu bài đầu tiên bị lỗi</small>
+              </div>
+            </div>
+
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 14px;">
+              <strong>💡 Khuyến Nghị:</strong> Với nick cũ, nên delay 60-180 giây, tối đa 20 bài/ngày để tránh bị khóa tài khoản.
+            </div>
+          </div>
+
+          <!-- CLONE ACCOUNT SETTINGS -->
+          <div id="clone-account-settings" class="account-settings-panel" style="display: none;">
+            <h3 style="border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 15px;">📋 Cài Đặt Cho Tài Khoản Clone</h3>
+            
+            <div class="settings-grid">
+              <div class="form-group">
+                <label>⏱️ Delay Tối Thiểu (giây)</label>
+                <input type="number" id="cloneAccMinDelay" value="20" min="5" max="120">
+                <small style="color: #64748b;">Nick mới có thể delay ngắn hơn. Từ 20-60 giây là an toàn</small>
+              </div>
+
+              <div class="form-group">
+                <label>⏱️ Delay Tối Đa (giây)</label>
+                <input type="number" id="cloneAccMaxDelay" value="90" min="5" max="300">
+                <small style="color: #64748b;">Delay sẽ random trong khoảng này</small>
+              </div>
+
+              <div class="form-group">
+                <label>📊 Bài Đăng Tối Đa Mỗi Ngày</label>
+                <input type="number" id="cloneAccMaxPostsPerDay" value="50" min="1" max="500">
+                <small style="color: #64748b;">Nick clone mới có thể post nhiều hơn (50-100 bài/ngày)</small>
+              </div>
+
+              <div class="form-group">
+                <label>🎯 Warm-up Mode (Ngày 1-3)</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="checkbox" id="cloneAccWarmupMode" checked>
+                  <label for="cloneAccWarmupMode" style="font-weight: 400;">Bật chế độ warm-up</label>
+                </div>
+                <small style="color: #64748b;">Các ngày đầu sẽ tự động giảm số lượng bài để tránh bị cảnh báo</small>
+              </div>
+
+              <div class="form-group">
+                <label>📅 Ngày Warm-up (ngày)</label>
+                <input type="number" id="cloneAccWarmupDays" value="3" min="1" max="7">
+                <small style="color: #64748b;">Số ngày để giảm dần số lượng bài</small>
+              </div>
+
+              <div class="form-group">
+                <label>📊 Bài Tối Đa Giai Đoạn Warm-up</label>
+                <input type="number" id="cloneAccWarmupMaxPosts" value="10" min="1" max="50">
+                <small style="color: #64748b;">Số bài tối đa trong giai đoạn warm-up</small>
+              </div>
+
+              <div class="form-group">
+                <label>⏸️ Delay Khi Bị Lỗi (giây)</label>
+                <input type="number" id="cloneAccErrorDelay" value="180" min="30" max="1200">
+                <small style="color: #64748b;">Chờ bao lâu khi gặp lỗi trước khi retry</small>
+              </div>
+
+              <div class="form-group">
+                <label>🔄 Số Lần Retry Tối Đa</label>
+                <input type="number" id="cloneAccMaxRetry" value="2" min="1" max="10">
+                <small style="color: #64748b;">Thử lại bao nhiêu lần nếu bài bị lỗi</small>
+              </div>
+
+              <div class="form-group">
+                <label>🚀 Aggressiveness Mode</label>
+                <select id="cloneAccAggressive" style="padding: 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); width: 100%;">
+                  <option value="conservative">🐢 Bảo thủ (Chậm, an toàn)</option>
+                  <option value="normal" selected>⚖️ Bình thường (Cân bằng)</option>
+                  <option value="aggressive">⚡ Tích cực (Nhanh, rủi ro cao)</option>
+                </select>
+                <small style="color: #64748b;">Điều chỉnh tốc độ và mức độ spam</small>
+              </div>
+            </div>
+
+            <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 14px;">
+              <strong>💡 Khuyến Nghị:</strong> Ngày 1-3 warm-up với 10 bài, sau đó tăng dần đến 50 bài/ngày.
+            </div>
+          </div>
+
+          <!-- Save Settings Button -->
+          <div style="margin-top: 20px; display: flex; gap: 1rem;">
+            <button id="btnSaveSettings" class="btn action-btn" style="flex: 1; background: #10b981;">💾 Lưu Cài Đặt</button>
+            <button id="btnResetSettings" class="btn" style="flex: 1; background: #ef4444; color: white;">🔄 Khôi Phục Mặc Định</button>
+          </div>
+
+          <div id="settingsFeedback" style="margin-top: 15px; padding: 10px; border-radius: 6px; display: none; text-align: center; font-weight: 600;"></div>
+        </section>
+      </div>
     </div>
   </div>
   <script src="dashboard.js"></script>
